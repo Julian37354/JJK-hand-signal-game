@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JJK Hand Gesture Game</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #050816;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      color: #b3b3b3;
+      font-size: 0.9rem;
+    }
+
+    .game-container {
+      background: #111827;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .gesture-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button.gesture {
+      flex: 1 1 30%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.1s ease, background 0.1s ease;
+    }
+
+    button.gesture span.name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    button.gesture span.desc {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    button.gesture:hover {
+      transform: translateY(-2px);
+      background: #374151;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #030712;
+      border: 1px solid #1f2937;
+      font-size: 0.95rem;
+    }
+
+    .status-line {
+      margin: 4px 0;
+    }
+
+    .status-line strong {
+      color: #e5e7eb;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .result.win {
+      color: #22c55e;
+    }
+
+    .result.lose {
+      color: #ef4444;
+    }
+
+    .result.draw {
+      color: #eab308;
+    }
+
+    .scoreboard {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+
+    .reset-btn {
+      margin-top: 15px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #dc2626;
+      color: #f9fafb;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.1s ease, transform 0.1s ease;
+    }
+
+    .reset-btn:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>JJK Hand Gesture Duel</h1>
+  <div class="subtitle">
+    Choose a cursed hand gesture and clash with the CPU sorcerer.
+  </div>
+
+  <div class="game-container">
+    <div class="gesture-buttons">
+      <!-- You can tweak names/descriptions however you like -->
+      <button class="gesture" data-gesture="black-flash">
+        <span class="name">Black Flash</span>
+        <span class="desc">Overwhelming burst of cursed energy.</span>
+      </button>
+      <button class="gesture" data-gesture="domain-expansion">
+        <span class="name">Domain Expansion</span>
+        <span class="desc">Absolute territory of your technique.</span>
+      </button>
+      <button class="gesture" data-gesture="reverse-curse">
+        <span class="name">Reverse Curse</span>
+        <span class="desc">Heal and counter with refined energy.</span>
+      </button>
+    </div>
+
+    <div class="status">
+      <div class="status-line" id="player-choice">Player: —</div>
+      <div class="status-line" id="cpu-choice">CPU: —</div>
+      <div class="status-line" id="rule-text">
+        Rules: Black Flash beats Reverse Curse, Reverse Curse beats Domain Expansion, Domain Expansion beats Black Flash.
+      </div>
+      <div class="result" id="result-text"></div>
+      <div class="scoreboard">
+        <div id="player-score">Player Wins: 0</div>
+        <div id="cpu-score">CPU Wins: 0</div>
+        <div id="draw-score">Draws: 0</div>
+      </div>
+      <button class="reset-btn" id="reset-btn">Reset Score</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    JJK Hand Gesture Game – tweak gestures, art, and logic to match your own cursed style.
+  </div>
+
+  <script>
+    // Core gesture relationships (like rock-paper-scissors)
+    const beats = {
+      "black-flash": "reverse-curse",      // Black Flash overwhelms Reverse Curse
+      "reverse-curse": "domain-expansion", // Reverse Curse counters Domain Expansion
+      "domain-expansion": "black-flash"    // Domain Expansion traps Black Flash
+    };
+
+    const gestureNames = {
+      "black-flash": "Black Flash",
+      "domain-expansion": "Domain Expansion",
+      "reverse-curse": "Reverse Curse"
+    };
+
+    const playerChoiceEl = document.getElementById("player-choice");
+    const cpuChoiceEl = document.getElementById("cpu-choice");
+    const resultTextEl = document.getElementById("result-text");
+    const playerScoreEl = document.getElementById("player-score");
+    const cpuScoreEl = document.getElementById("cpu-score");
+    const drawScoreEl = document.getElementById("draw-score");
+    const resetBtn = document.getElementById("reset-btn");
+
+    let playerScore = 0;
+    let cpuScore = 0;
+    let drawScore = 0;
+
+    function getRandomGesture() {
+      const keys = Object.keys(beats);
+      const index = Math.floor(Math.random() * keys.length);
+      return keys[index];
+    }
+
+    function playRound(playerGesture) {
+      const cpuGesture = getRandomGesture();
+
+      playerChoiceEl.textContent = "Player: " + gestureNames[playerGesture];
+      cpuChoiceEl.textContent = "CPU: " + gestureNames[cpuGesture];
+
+      if (playerGesture === cpuGesture) {
+        drawScore++;
+        updateScores();
+        showResult("draw", "Draw – your cursed energies clash evenly.");
+        return;
+      }
+
+      if (beats[playerGesture] === cpuGesture) {
+        playerScore++;
+        updateScores();
+        showResult("win", "You win – your technique overwhelms the opponent.");
+      } else {
+        cpuScore++;
+        updateScores();
+        showResult("lose", "You lose – the opponent’s technique dominates this clash.");
+      }
+    }
+
+    function updateScores() {
+      playerScoreEl.textContent = "Player Wins: " + playerScore;
+      cpuScoreEl.textContent = "CPU Wins: " + cpuScore;
+      drawScoreEl.textContent = "Draws: " + drawScore;
+    }
+
+    function showResult(type, message) {
+      resultTextEl.textContent = message;
+      resultTextEl.classList.remove("win", "lose", "draw");
+      resultTextEl.classList.add(type);
+    }
+
+    document.querySelectorAll("button.gesture").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const gesture = btn.getAttribute("data-gesture");
+        playRound(gesture);
+      });
+    });
+
+    resetBtn.addEventListener("click", () => {
+      playerScore = 0;
+      cpuScore = 0;
+      drawScore = 0;
+      updateScores();
+      playerChoiceEl.textContent = "Player: —";
+      cpuChoiceEl.textContent = "CPU: —";
+      resultTextEl.textContent = "";
+      resultTextEl.classList.remove("win", "lose", "draw");
+    });
+  </script>
+</body>
+</html>
